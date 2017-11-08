@@ -1,0 +1,15 @@
+{
+  "name": "color-extractor",
+  "version": "0.0.1",
+  "description": "Extract colors from .scss files",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "hrb90",
+  "license": "ISC",
+  "dependencies": {
+    "query-ast": "^1.0.1",
+    "scss-parser": "^1.0.0"
+  }
+}
