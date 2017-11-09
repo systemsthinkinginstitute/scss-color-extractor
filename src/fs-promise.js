@@ -1,5 +1,5 @@
-const fs = require('fs');
-const promisify = require('es6-promisify');
+const fs = require("fs");
+const promisify = require("es6-promisify");
 
 const readFile = promisify(fs.readFile);
 const readDir = promisify(fs.readdir);
