@@ -9,6 +9,7 @@
   "author": "hrb90",
   "license": "ISC",
   "dependencies": {
+    "es6-promisify": "^5.0.0",
     "query-ast": "^1.0.1",
     "scss-parser": "^1.0.0"
   }
