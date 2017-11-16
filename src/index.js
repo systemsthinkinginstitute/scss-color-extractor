@@ -12,7 +12,7 @@ const prettyPrint = obj => console.log(JSON.stringify(obj, null, 2));
 
 const parseStylesheet = stylesheet => {
   const $ = createQueryWrapper(parse(stylesheet));
-  
+
   const extractIdentifier = declaration => {
     const identifier = declaration.find("identifier");
     if (identifier && identifier.first()) {
@@ -21,11 +21,11 @@ const parseStylesheet = stylesheet => {
       return null;
     }
   };
-  
+
   const extractColorHex = value => {
     return value.find("color_hex");
   };
-  
+
   const extractColorFunction = value => {
     return value.find("function").filter(fn => {
       const fnIdentifier = $(fn).find("identifier");
@@ -36,34 +36,34 @@ const parseStylesheet = stylesheet => {
       }
     });
   };
-  
+
   const extractColorLiteral = value => {
-    return value.find("identifier").filter(id => {
-      return CSS_COLOR_LITERALS.includes(
+    return value.find("identifier").filter(id =>
+      CSS_COLOR_LITERALS.includes(
         $(id)
-        .value()
-        .toLowerCase()
-      );
-    });
+          .value()
+          .toLowerCase()
+      )
+    );
   };
-  
+
   const extractColorValues = declaration => {
     const values = declaration.find("value");
     return extractColorHex(values)
-    .concat(extractColorFunction(values))
-    .concat(extractColorLiteral(values));
+      .concat(extractColorFunction(values))
+      .concat(extractColorLiteral(values));
   };
-  
+
   const colorDeclarations = $("declaration").filter(node => {
     return COLOR_IDENTIFIER_VALUES.includes(extractIdentifier($(node)));
   });
-  
+
   return colorDeclarations
-  .filter(declaration => extractColorValues($(declaration)).length())
-  .map(d => ({
-    rule: stringify($(d).get(0)),
-    line: d.node.start.line
-  }));
+    .filter(declaration => extractColorValues($(declaration)).length())
+    .map(d => ({
+      rule: stringify($(d).get(0)),
+      line: d.node.start.line
+    }));
 };
 
 // this is a really awful hack that needs to be taken care of soon
@@ -112,8 +112,7 @@ async function main(path) {
   const isDir = await fs.isDir(path);
   let output;
   if (isDir) {
-    if (!/.\/$/.test(path))
-      path = path + "/";
+    if (!/.\/$/.test(path)) path = path + "/";
     output = await readRecursively(path);
   } else if (scss.test(path)) {
     output = await readFile(path);
@@ -121,10 +120,13 @@ async function main(path) {
     throw new Error("Sorry, I couldn't read that file.");
   }
 
-  const outputText = output.map(d => (
-    `At ${d.filename}:${d.line}:
+  const outputText = output
+    .map(
+      d =>
+        `At ${d.filename}:${d.line}:
     ${d.rule}`
-  )).join('\n');
+    )
+    .join("\n");
   if (opts.out) {
     await fs.writeFile(opts.out, outputText, "utf8");
   } else {
