@@ -10,8 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "es6-promisify": "^5.0.0",
-    "query-ast": "^1.0.1",
-    "scss-parser": "^1.0.0",
+    "gonzales-pe": "^4.2.3",
     "yargs": "^10.0.3"
   }
 }
