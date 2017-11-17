@@ -1,4 +1,4 @@
-const gonzales = require('gonzales-pe');
+const gonzales = require("gonzales-pe");
 const {
   COLOR_FUNCTION_VALUES,
   COLOR_IDENTIFIER_VALUES,
@@ -6,57 +6,78 @@ const {
 } = require("./constants");
 
 const parseStylesheet = stylesheet => {
-  const parseTree = gonzales.parse(stylesheet);
+  const parseTree = gonzales.parse(stylesheet, { syntax: "scss" });
 
-  const extractIdentifier = declaration => {
-    const identifier = declaration.find("identifier");
-    if (identifier && identifier.first()) {
-      return identifier.first().value();
-    } else {
-      return null;
-    }
+  let flaggedColorDeclarations = [];
+
+  const isColorDeclaration = declaration => {
+    let wellIsIt = false;
+
+    declaration.traverseByType("property", prop => {
+      prop.traverseByType("ident", ident => {
+        wellIsIt = wellIsIt || COLOR_IDENTIFIER_VALUES.includes(ident.content);
+      });
+    });
+
+    return wellIsIt;
   };
 
   const extractColorHex = value => {
-    return value.find("color_hex");
+    let hexes = [];
+    value.traverseByType("color", n => {
+      hexes.push(n);
+    });
+    return hexes;
   };
 
   const extractColorFunction = value => {
-    return value.find("function").filter(fn => {
-      const fnIdentifier = $(fn).find("identifier");
-      if (fnIdentifier && fnIdentifier.first()) {
-        return COLOR_FUNCTION_VALUES.includes(fnIdentifier.first().value());
-      } else {
-        return false;
-      }
+    let fns = [];
+    value.traverseByType("function", fn => {
+      if (fn.first() && COLOR_FUNCTION_VALUES.includes(fn.first().content))
+        fns.push(fn);
     });
+    return fns;
   };
 
   const extractColorLiteral = value => {
-    return value.find("identifier").filter(id =>
-      CSS_COLOR_LITERALS.includes(
-        $(id)
-          .value()
-          .toLowerCase()
-      )
-    );
+    let lits = [];
+    value.traverseByType("ident", (ident, _, parent) => {
+      if (
+        parent.type !== "variable" &&
+        CSS_COLOR_LITERALS.includes(ident.content)
+      ) {
+        lits.push(ident);
+      }
+    });
+    return lits;
+  };
+
+  const extractColors = value => {
+    return extractColorHex(value)
+      .concat(extractColorFunction(value))
+      .concat(extractColorLiteral(value));
   };
 
   const extractColorValues = declaration => {
-    const values = declaration.find("value");
-    return extractColorHex(values)
-      .concat(extractColorFunction(values))
-      .concat(extractColorLiteral(values));
+    let literals = [];
+    declaration.traverseByType("value", val => {
+      literals = literals.concat(extractColors(val));
+    });
+    return literals;
   };
 
-  const colorDeclarations = $("declaration").filter(node => {
-    return COLOR_IDENTIFIER_VALUES.includes(extractIdentifier($(node)));
+  const extractInfo = node => ({
+    rule: node.toString() + ";",
+    line: node.start.line
   });
 
-  return colorDeclarations
-    .filter(declaration => extractColorValues($(declaration)).length())
-    .map(d => ({
-      rule: stringify($(d).get(0)),
-      line: d.node.start.line
-    }));
+  parseTree.traverseByType("declaration", dec => {
+    if (isColorDeclaration(dec) && extractColorValues(dec).length > 0) {
+      flaggedColorDeclarations.push(extractInfo(dec));
+    }
+  });
+
+  return flaggedColorDeclarations;
 };
+
+module.exports = { parseStylesheet };
